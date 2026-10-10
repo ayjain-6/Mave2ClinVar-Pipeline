@@ -1,0 +1,5 @@
+Gene,Subset,Pathogenic_Controls_N,Benign_Controls_N,ROC_AUC,CI_Lower,CI_Upper,PS3_Cutoff,BS3_Cutoff,Max_OddsPath,ACmg_Strength
+BRCA1,Missense Only,112,198,0.979,0.965,0.991,-1.21,-0.18,52.4,PS3_Strong
+BRCA1,All Controls,124,215,0.984,0.972,0.994,-1.21,-0.18,61.1,PS3_Strong
+TP53,Missense Only,165,82,0.954,0.938,0.972,-1.45,-0.25,41.0,PS3_Strong
+PTEN,Missense Only,81,130,0.968,0.951,0.985,-1.1,-0.15,35.8,PS3_Strong
