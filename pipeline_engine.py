@@ -1,6 +1,7 @@
 import os
 import re
 import yaml
+import warnings
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
@@ -11,17 +12,19 @@ def load_config(config_path="config.yaml"):
 
 def load_and_filter_clinvar(clinvar_df: pd.DataFrame, gene_pmids: list) -> tuple:
     """
-    Rigorously audits and filters out ClinVar submissions that cite 
-    gene-specific core MAVE publications using exact boundary matching.
+    Audits and filters out ClinVar submissions citing gene-specific core MAVE publications
+    using exact word-boundary regex matching. Raises warning if citations column is absent.
     """
     total_initial = len(clinvar_df)
     if "citations" in clinvar_df.columns:
-        pattern = '|'.join([r'\\b' + re.escape(pmid) + r'\\b' for pmid in gene_pmids])
+        # Use single-backslash raw string word boundaries
+        pattern = '|'.join([r'\b' + re.escape(pmid) + r'\b' for pmid in gene_pmids])
         mask = clinvar_df["citations"].str.contains(pattern, na=False, regex=True)
         independent_df = clinvar_df[~mask].copy()
         retained_count = len(independent_df)
         filtered_out = total_initial - retained_count
     else:
+        warnings.warn("Missing 'citations' column in ClinVar data; circularity audit bypassed.")
         independent_df = clinvar_df.copy()
         retained_count = total_initial
         filtered_out = 0
@@ -34,30 +37,24 @@ def load_and_filter_clinvar(clinvar_df: pd.DataFrame, gene_pmids: list) -> tuple
     return independent_df, audit_info
 
 def separate_variant_types(df: pd.DataFrame) -> tuple:
-    """Isolates missense-only variants to prevent metric inflation."""
-    if "variant_type" in df.columns:
-        missense_df = df[df["variant_type"] == "missense"].copy()
-        other_df = df[df["variant_type"] != "missense"].copy()
-        return missense_df, other_df
-    return df, pd.DataFrame()
+    """Isolates missense-only variants. Returns empty frame if column is absent."""
+    if "variant_type" not in df.columns:
+        return pd.DataFrame(), df
+    missense_df = df[df["variant_type"] == "missense"].copy()
+    other_df = df[df["variant_type"] != "missense"].copy()
+    return missense_df, other_df
 
 def compute_count_based_oddspath(n_path_in_range: int, n_benign_in_range: int, range_type: str = "abnormal", p1: float = 0.10, min_controls: int = 11) -> tuple:
     """
     Computes count-based OddsPath likelihood ratio with Laplace smoothing and small-bin safeguards.
-    Evaluates abnormal range against PS3 tiers and normal range against BS3 tiers.
     """
     total_in_bin = n_path_in_range + n_benign_in_range
     if total_in_bin < min_controls:
         return None, "Insufficient Controls (<11)"
     
-    # Laplace smoothing (add-half/add-one stabilization)
+    # Laplace smoothing (add-half stabilization)
     p2 = (n_path_in_range + 0.5) / (total_in_bin + 1.0)
     
-    if p2 <= 0.0:
-        p2 = 1e-4
-    if p2 >= 1.0:
-        p2 = 1.0 - 1e-4
-        
     odds_path = (p2 * (1.0 - p1)) / ((1.0 - p2) * p1)
     
     tier = "Indeterminate"
@@ -73,10 +70,7 @@ def compute_count_based_oddspath(n_path_in_range: int, n_benign_in_range: int, r
     return float(odds_path), tier
 
 def run_bootstrap_auc(scores, labels, lower_is_pathogenic: bool = True, n_iterations: int = 1000) -> tuple:
-    """
-    Computes point estimate ROC-AUC and bootstrap percentile confidence intervals 
-    using modern NumPy default_rng with safe array casting.
-    """
+    """Computes point estimate ROC-AUC and bootstrap percentile confidence intervals."""
     scores_arr = np.asarray(scores, dtype=float)
     labels_arr = np.asarray(labels, dtype=int)
     
@@ -107,21 +101,34 @@ def run_bootstrap_auc(scores, labels, lower_is_pathogenic: bool = True, n_iterat
 
 def run_calibration(data_dict: dict, config: dict) -> pd.DataFrame:
     """
-    Executes orientation-aware calibration across dual ranges (abnormal & normal), writing summary outputs.
+    Executes calibration across dual ranges, requiring strict config parameters.
     """
     results = []
     p1 = config.get("calibration", {}).get("prior_pathogenic", 0.10)
     min_ctrls = config.get("calibration", {}).get("min_controls_required", 11)
     
     for gene, df in data_dict.items():
-        gene_cfg = config["genes"].get(gene, {})
+        if gene not in config.get("genes", {}):
+            raise KeyError(f"Gene '{gene}' missing from configuration file.")
+            
+        gene_cfg = config["genes"][gene]
+        
+        # Require explicit cutoffs
+        if "ps3_cutoff" not in gene_cfg or "bs3_cutoff" not in gene_cfg:
+            raise ValueError(f"Gene '{gene}' is missing required 'ps3_cutoff' or 'bs3_cutoff' in config.yaml.")
+            
         pmids = gene_cfg.get("mave_pmids", [gene_cfg.get("mave_pmid", "")])
         lower_path = gene_cfg.get("lower_is_pathogenic", True)
+        ps3_cut = gene_cfg["ps3_cutoff"]
+        bs3_cut = gene_cfg["bs3_cutoff"]
         
         filtered_df, audit = load_and_filter_clinvar(df, pmids)
         missense_df, _ = separate_variant_types(filtered_df)
         
-        subsets = {"All Controls": filtered_df, "Missense Only": missense_df}
+        subsets = {"All Controls": filtered_df}
+        if not missense_df.empty:
+            subsets["Missense Only"] = missense_df
+            
         for subset_name, sub_df in subsets.items():
             if len(sub_df) < 5:
                 continue
@@ -134,10 +141,6 @@ def run_calibration(data_dict: dict, config: dict) -> pd.DataFrame:
             
             auc, ci_low, ci_high = run_bootstrap_auc(scores, labels, lower_is_pathogenic=lower_path)
             
-            ps3_cut = gene_cfg.get("ps3_cutoff", -1.21)
-            bs3_cut = gene_cfg.get("bs3_cutoff", -0.18)
-            
-            # Dynamic binning masks based on orientation (lower_is_pathogenic)
             if lower_path:
                 abnormal_mask = (scores <= ps3_cut)
                 normal_mask = (scores >= bs3_cut)
