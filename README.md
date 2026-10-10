@@ -1,13 +1,13 @@
-# 🧬 Mave2ClinVar: Multi-Gene Clinical Calibration & Benchmarking Framework
+# Mave2ClinVar: Functional Evidence Calibration & Benchmarking Framework
 
 [![CI/CD Pipeline](https://github.com/ayjain-6/Mave2ClinVar-Pipeline/actions/workflows/test.yml/badge.svg)](https://github.com/ayjain-6/Mave2ClinVar-Pipeline/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-An automated, config-driven framework for calibrating Multiplexed Assays of Variant Effect (MAVE) scores against NCBI ClinVar under the **ACMG/AMP PS3/BS3 clinical guidelines**.
+An automated, config-driven framework for calibrating Multiplexed Assays of Variant Effect (MAVE) scores against NCBI ClinVar under the ACMG/AMP PS3/BS3 clinical guidelines.
 
 ---
 
-## 📌 Fixed Metadata & Reference Standards
+## Fixed Metadata & Reference Standards
 * **Genome Build:** GRCh38 / hg38
 * **ClinVar Release Pin:** `2026-09-28`
 * **Transcripts Pinned:**
@@ -17,7 +17,7 @@ An automated, config-driven framework for calibrating Multiplexed Assays of Vari
 
 ---
 
-## 📊 Calibration Controls & Bootstrap Performance
+## Calibration Controls & Bootstrap Performance
 
 | Gene | Target Domain | Assay Type | Pathogenic Controls (N) | Benign Controls (N) | ROC-AUC (95% CI) | PS3 Cutoff (Pathogenic) | BS3 Cutoff (Benign) |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -27,13 +27,13 @@ An automated, config-driven framework for calibrating Multiplexed Assays of Vari
 
 ---
 
-## ⚠️ Limitations & Circularity Statement
+## Limitations & Circularity Statement
 1. **Circularity Hazard:** Many ClinVar submissions for well-studied genes cite functional assay publications as evidence. To eliminate circular reasoning, this pipeline isolates and reports benchmarks on **independent ClinVar submissions** that do not cite the MAVE publication.
 2. **Assay Target Boundaries:** Saturation Genome Editing and Deep Mutational Scanning assays evaluate variants strictly within targeted coding/splice-region boundaries. Assays **cannot evaluate** deep intronic variants, large structural rearrangements, or promoter/enhancer non-coding elements.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 ```bash
 # Clone Repository
 git clone [https://github.com/ayjain-6/Mave2ClinVar-Pipeline.git](https://github.com/ayjain-6/Mave2ClinVar-Pipeline.git)
@@ -47,3 +47,4 @@ pytest
 
 # Launch Streamlit Dashboard
 streamlit run app.py
+```
