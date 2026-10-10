@@ -1,27 +1,39 @@
-pipeline:
+# Mave2ClinVar Pipeline Configuration
+
+project:
+  name: "Mave2ClinVar-Pipeline"
   genome_build: "GRCh38"
-  clinvar_release: "2026-09-28"
-  bootstrap_iterations: 1000
-  confidence_level: 0.95
+  clinvar_pin: "2026-09-28"
 
 genes:
   BRCA1:
-    mavedb_urn: "urn:mavedb:00000003-a-1"
-    refseq_transcript: "NM_007294.4"
-    protein_id: "NP_007263.1"
+    transcript: "NM_007294.4"
+    protein: "NP_007263.1"
+    domain: "RING Domain"
     assay_type: "Saturation Genome Editing (SGE)"
-    target_region: "RING Domain (Exons 2-5)"
-    
+    mave_pmid: "PMID:32494009"
+    ps3_cutoff: -1.21
+    bs3_cutoff: -0.18
+
   TP53:
-    mavedb_urn: "urn:mavedb:00000013-a-1"
-    refseq_transcript: "NM_000546.6"
-    protein_id: "NP_000537.3"
+    transcript: "NM_000546.6"
+    protein: "NP_000537.3"
+    domain: "DNA-Binding Domain"
     assay_type: "Deep Mutational Scanning (DMS)"
-    target_region: "DNA Binding Domain"
+    mave_pmid: "PMID:30294151"
+    ps3_cutoff: -1.45
+    bs3_cutoff: -0.25
 
   PTEN:
-    mavedb_urn: "urn:mavedb:00000013-b-1"
-    refseq_transcript: "NM_000314.8"
-    protein_id: "NP_000305.3"
-    assay_type: "Abundance & Activity DMS"
-    target_region: "Full Length (Phosphatase & C2 Domain)"
+    transcript: "NM_000314.8"
+    protein: "NP_000305.3"
+    domain: "Phosphatase Domain"
+    assay_type: "Deep Mutational Scanning (DMS)"
+    mave_pmid: "PMID:31792456"
+    ps3_cutoff: -1.10
+    bs3_cutoff: -0.15
+
+calibration:
+  prior_pathogenic (P1): 0.10
+  min_controls_required: 11
+  bootstrap_iterations: 1000
