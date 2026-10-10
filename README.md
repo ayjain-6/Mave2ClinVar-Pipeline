@@ -3,33 +3,31 @@
 [![CI/CD Pipeline](https://github.com/ayjain-6/Mave2ClinVar-Pipeline/actions/workflows/test.yml/badge.svg)](https://github.com/ayjain-6/Mave2ClinVar-Pipeline/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-An automated, config-driven framework for calibrating Multiplexed Assays of Variant Effect (MAVE) scores against NCBI ClinVar under the ACMG/AMP PS3/BS3 clinical guidelines.
+An automated, config-driven framework for calibrating Multiplexed Assays of Variant Effect (MAVE) scores against NCBI ClinVar under the ACMG/AMP PS3/BS3 clinical guidelines using count-based OddsPath likelihood ratios.
 
 ---
 
 ## Fixed Metadata & Reference Standards
 * **Genome Build:** GRCh38 / hg38
 * **ClinVar Release Pin:** `2026-09-28`
-* **Transcripts Pinned:**
-  * **BRCA1:** `NM_007294.4` (`NP_007263.1`)
-  * **TP53:** `NM_000546.6` (`NP_000537.3`)
-  * **PTEN:** `NM_000314.8` (`NP_000305.3`)
+* **Prior Pathogenicity (P1):** `0.10`
 
 ---
 
-## Calibration Controls & Bootstrap Performance
+## Calibration Controls & OddsPath Performance (`results/summary.csv`)
 
-| Gene | Target Domain | Assay Type | Pathogenic Controls (N) | Benign Controls (N) | ROC-AUC (95% CI) | PS3 Cutoff (Pathogenic) | BS3 Cutoff (Benign) |
-| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **BRCA1** | RING Domain | SGE | 124 | 215 | **0.984 (0.972–0.994)** | ≤ -1.21 | ≥ -0.18 |
-| **TP53** | DNA-Binding | DMS | 182 | 94 | **0.961 (0.945–0.978)** | ≤ -1.45 | ≥ -0.25 |
-| **PTEN** | Phosphatase | DMS | 89 | 142 | **0.973 (0.958–0.989)** | ≤ -1.10 | ≥ -0.15 |
+| Gene | Subset | Pathogenic (N) | Benign (N) | ROC-AUC (95% CI) | PS3 Cutoff | OddsPath (Abnormal) | ACMG Strength |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **BRCA1** | Missense Only | 112 | 198 | **0.979 (0.965–0.991)** | ≤ -1.21 | 52.4 | PS3_Strong |
+| **BRCA1** | All Controls | 124 | 215 | **0.984 (0.972–0.994)** | ≤ -1.21 | 61.1 | PS3_Strong |
+| **TP53** | Missense Only | 165 | 82 | **0.954 (0.938–0.972)** | ≤ -1.45 | 41.0 | PS3_Strong |
+| **PTEN** | Missense Only | 81 | 130 | **0.968 (0.951–0.985)** | ≤ -1.10 | 35.8 | PS3_Strong |
 
 ---
 
 ## Limitations & Circularity Statement
-1. **Circularity Hazard:** Many ClinVar submissions for well-studied genes cite functional assay publications as evidence. To eliminate circular reasoning, this pipeline isolates and reports benchmarks on **independent ClinVar submissions** that do not cite the MAVE publication.
-2. **Assay Target Boundaries:** Saturation Genome Editing and Deep Mutational Scanning assays evaluate variants strictly within targeted coding/splice-region boundaries. Assays **cannot evaluate** deep intronic variants, large structural rearrangements, or promoter/enhancer non-coding elements.
+1. **Circularity Hazard:** Many ClinVar submissions for well-studied genes cite functional assay publications as evidence. To maintain rigor, this pipeline **reduces circular reasoning** by auditing and filtering out independent submissions that cite gene-specific MAVE publications.
+2. **Assay Target Boundaries:** Assays evaluate variants strictly within targeted coding/splice regions and cannot evaluate deep intronic or structural rearrangements.
 
 ---
 

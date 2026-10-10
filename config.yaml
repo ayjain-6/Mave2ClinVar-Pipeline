@@ -11,7 +11,8 @@ genes:
     protein: "NP_007263.1"
     domain: "RING Domain"
     assay_type: "Saturation Genome Editing (SGE)"
-    mave_pmid: "PMID:32494009"
+    mave_pmids: ["PMID:32494009", "PMID:29758786"]
+    lower_is_pathogenic: true
     ps3_cutoff: -1.21
     bs3_cutoff: -0.18
 
@@ -20,7 +21,8 @@ genes:
     protein: "NP_000537.3"
     domain: "DNA-Binding Domain"
     assay_type: "Deep Mutational Scanning (DMS)"
-    mave_pmid: "PMID:30294151"
+    mave_pmids: ["PMID:30294151"]
+    lower_is_pathogenic: true
     ps3_cutoff: -1.45
     bs3_cutoff: -0.25
 
@@ -29,11 +31,12 @@ genes:
     protein: "NP_000305.3"
     domain: "Phosphatase Domain"
     assay_type: "Deep Mutational Scanning (DMS)"
-    mave_pmid: "PMID:31792456"
+    mave_pmids: ["PMID:31792456"]
+    lower_is_pathogenic: true
     ps3_cutoff: -1.10
     bs3_cutoff: -0.15
 
 calibration:
-  prior_pathogenic (P1): 0.10
+  prior_pathogenic: 0.10
   min_controls_required: 11
   bootstrap_iterations: 1000
